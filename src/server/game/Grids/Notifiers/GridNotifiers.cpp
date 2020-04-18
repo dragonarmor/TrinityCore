@@ -133,10 +133,10 @@ inline void CreatureUnitRelocationWorker(Creature* c, Unit* u)
 
     if (!c->HasUnitState(UNIT_STATE_SIGHTLESS))
     {
-        if (c->IsAIEnabled && c->CanSeeOrDetect(u, false, true))
+        if (c->IsAIEnabled() && c->CanSeeOrDetect(u, false, true))
             c->AI()->MoveInLineOfSight_Safe(u);
         else
-            if (u->GetTypeId() == TYPEID_PLAYER && u->HasStealthAura() && c->IsAIEnabled && c->CanSeeOrDetect(u, false, true, true))
+            if (u->GetTypeId() == TYPEID_PLAYER && u->HasStealthAura() && c->IsAIEnabled() && c->CanSeeOrDetect(u, false, true, true))
                 c->AI()->TriggerAlert(u);
     }
 }
@@ -423,17 +423,17 @@ bool AnyDeadUnitObjectInRangeCheck::operator()(Creature* u)
 
 bool AnyDeadUnitSpellTargetInRangeCheck::operator()(Player* u)
 {
-    return AnyDeadUnitObjectInRangeCheck::operator()(u) && i_check(u);
+    return AnyDeadUnitObjectInRangeCheck::operator()(u) && WorldObjectSpellTargetCheck::operator()(u);
 }
 
 bool AnyDeadUnitSpellTargetInRangeCheck::operator()(Corpse* u)
 {
-    return AnyDeadUnitObjectInRangeCheck::operator()(u) && i_check(u);
+    return AnyDeadUnitObjectInRangeCheck::operator()(u) && WorldObjectSpellTargetCheck::operator()(u);
 }
 
 bool AnyDeadUnitSpellTargetInRangeCheck::operator()(Creature* u)
 {
-    return AnyDeadUnitObjectInRangeCheck::operator()(u) && i_check(u);
+    return AnyDeadUnitObjectInRangeCheck::operator()(u) && WorldObjectSpellTargetCheck::operator()(u);
 }
 
 template void ObjectUpdater::Visit<Creature>(CreatureMapType&);

@@ -274,7 +274,7 @@ void bot_ai::ResetBotAI(uint8 resetType)
     (const_cast<CreatureTemplate*>(me->GetCreatureTemplate()))->unit_flags2 |= (UNIT_FLAG2_ALLOW_ENEMY_INTERACT);
     me->SetUInt32Value(UNIT_FIELD_FLAGS_2, me->GetCreatureTemplate()->unit_flags2);
 
-    me->IsAIEnabled = true;
+    //me->IsAIEnabled = true;
     me->SetCanUpdate(true);
 
     if (spawned)
@@ -556,7 +556,7 @@ void bot_minion_ai::_calculatePos(Position& pos)
             mydist *= 0.2f;
             break;
         }
-        master->GetNearPoint(me, x, y, z, size, mydist, angle);
+        master->GetNearPoint(me, x, y, z, mydist, angle);
         if (!master->IsWithinLOS(x,y,z)) //try to get much closer to master
         {
             mydist *= 0.4f - float(i*0.07f);
@@ -1204,7 +1204,7 @@ void bot_ai::_listAuras(Player* player, Unit* unit) const
     ch.PSendSysMessage("total hp: %u", unit->GetMaxHealth());
     ch.PSendSysMessage("base mana: %u", unit->GetCreateMana());
     ch.PSendSysMessage("total mana: %u", unit->GetMaxPower(POWER_MANA));
-    if (unit->GetShapeshiftForm() != FORM_NONE && unit->getPowerType() != POWER_MANA)
+    if (unit->GetShapeshiftForm() != FORM_NONE && unit->GetPowerType() != POWER_MANA)
         ch.PSendSysMessage("cur mana: %u", unit->GetPower(POWER_MANA));
     //DEBUG1
     //ch.PSendSysMessage("STATS: ");
@@ -2615,7 +2615,7 @@ void bot_pet_ai::CheckAuras(bool /*force*/)
 
 bool bot_ai::CanBotAttack(Unit const* target, int8 byspell) const
 {
-    if (!target)
+    if (!target || !_allowedToAttack)
         return false;
     if (!_botPvP && !IAmFree() && target->IsControlledByPlayer())
         return false;
@@ -2797,7 +2797,7 @@ Unit* bot_ai::_getTarget(bool byspell, bool ranged, bool &reset) const
 //'CanAttack' function
 bool bot_ai::CheckAttackTarget(uint8 botOrPetType)
 {
-    if (IsDuringTeleport()/* || _evadeMode*/)
+    if (IsDuringTeleport()/* || _evadeMode*/ || !_allowedToAttack)
     {
         //me->AttackStop(); //already in CombatStop()
         me->CombatStop(true);
@@ -2884,20 +2884,20 @@ void bot_ai::CalculateAttackPos(Unit* target, Position& pos) const
     uint8 followdist = IAmFree() ? 100 : master->GetBotFollowDist();
     float x(0),y(0),z(0),
         dist = float(6 + urand(followdist/4, followdist/3)),
-        angle = target->GetAngle(me);
+        angle = target->GetAbsoluteAngle(me);
     dist = std::min(dist, 20.f);
     if (me->GetIAmABotsPet())
         dist *= 0.5f;
     float clockwise = RAND(1.f,-1.f);
     for (uint8 i = 0; i != 5; ++i)
     {
-        target->GetNearPoint(me, x, y, z, me->GetObjectSize()/2.f, dist, angle);
+        target->GetNearPoint(me, x, y, z, dist, angle);
         bool toofaraway = master->GetDistance(x,y,z) > (followdist > 28 ? 28.f : followdist < 20 ? 20.f : float(followdist));
         bool outoflos = !target->IsWithinLOS(x,y,z);
         if (toofaraway || outoflos)
         {
             if (toofaraway)
-                angle = target->GetAngle(master) + frand(0.f, M_PI*0.5f) * clockwise;
+                angle = target->GetAbsoluteAngle(master) + frand(0.f, M_PI*0.5f) * clockwise;
             if (outoflos)
                 dist *= 0.5f;
         }
@@ -2959,7 +2959,7 @@ void bot_ai::GetInPosition(bool force, Unit* newtarget, Position* mypos)
 
 void bot_ai::CheckAttackState()
 {
-    if (me->GetVictim())
+    if (me->GetVictim() && _allowedToAttack)
     {
         if (HasRole(BOT_ROLE_DPS))
             DoMeleeAttackIfReady();
@@ -2979,7 +2979,7 @@ bool bot_ai::MoveBehind(Unit &target) const
         (_botclass == BOT_CLASS_ROGUE ? target.GetVictim() != me || CCed(&target) : target.GetVictim() != me && !CCed(&target)))
     {
         float x(0),y(0),z(0);
-        target.GetNearPoint(me, x, y, z, me->GetObjectSize()/3, 0.1f, me->GetAngle(&target));
+        target.GetNearPoint(me, x, y, z, 0.1f, me->GetAbsoluteAngle(&target));
         me->GetMotionMaster()->MovePoint(target.GetMapId(), x, y, z);
         return true;
     }
@@ -3002,7 +3002,7 @@ void bot_minion_ai::_updateMountedState()
 
     if ((!master->IsMounted() || aura != mounted || (me->IsInCombat() && opponent)) && (aura || mounted))
     {
-        const_cast<CreatureTemplate*>(me->GetCreatureTemplate())->InhabitType &= ~INHABIT_AIR;
+        //const_cast<CreatureTemplate*>(me->GetCreatureTemplate())->InhabitType &= ~INHABIT_AIR;
         me->RemoveAurasByType(SPELL_AURA_MOUNTED);
         //me->RemoveUnitMovementFlag(MOVEMENTFLAG_HOVER);
         me->SetCanFly(false);
@@ -3290,7 +3290,7 @@ bool bot_ai::InDuel(Unit const* target) const
         player = target->GetCharmerOrOwnerPlayerOrPlayerItself();
     }
 
-    return (player && player->duel && (IsInBotParty(player) || IsInBotParty(player->duel->opponent)));
+    return (player && player->duel && (IsInBotParty(player) || IsInBotParty(player->duel->Opponent)));
 }
 ////////////////
 //GRID SEARCHERS
@@ -4236,7 +4236,7 @@ void bot_ai::OnSpellHit(Unit* caster, SpellInfo const* spell)
             if (master->HasAuraType(SPELL_AURA_MOD_INCREASE_VEHICLE_FLIGHT_SPEED) ||
                 master->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED))
             {
-                const_cast<CreatureTemplate*>(me->GetCreatureTemplate())->InhabitType |= INHABIT_AIR;
+                //const_cast<CreatureTemplate*>(me->GetCreatureTemplate())->InhabitType |= INHABIT_AIR;
                 //me->AddUnitMovementFlag(MOVEMENTFLAG_HOVER);
                 me->SetCanFly(true);
                 me->SetDisableGravity(true);
@@ -8918,7 +8918,7 @@ bool bot_minion_ai::FinishTeleport(/*uint32 mapId, uint32 instanceId, float x, f
     map->AddToMap(me);
     me->BotStopMovement();
     //bot->SetAI(oldAI);
-    me->IsAIEnabled = true;
+    //me->IsAIEnabled = true;
 
     master->m_Controlled.insert(me);
     me->CastSpell(me, COSMETIC_TELEPORT_EFFECT, true);
@@ -8965,7 +8965,7 @@ void bot_ai::KillEvents(bool force)
 
 bool bot_ai::IsBotImmuneToSpell(SpellInfo const* spellInfo) const
 {
-    if (spellInfo->_IsPositiveSpell())
+    if (spellInfo->IsPositive())
         return false;
 
     if (_botclass >= BOT_CLASS_EX_START)
@@ -9045,7 +9045,7 @@ void bot_ai::BuildGrouUpdatePacket(WorldPacket* data)
     if (mask & GROUP_UPDATE_FLAG_MAX_HP)
         *data << uint32(me->GetMaxHealth());
 
-    Powers powerType = me->getPowerType();
+    Powers powerType = me->GetPowerType();
     if (mask & GROUP_UPDATE_FLAG_POWER_TYPE)
         *data << uint8(powerType);
 

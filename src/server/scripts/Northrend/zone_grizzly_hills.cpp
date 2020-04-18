@@ -563,7 +563,7 @@ public:
 
     void JustEngagedWith(Unit* /*who*/) override
     {
-        _events.ScheduleEvent(EVENT_CHOP, Seconds(3), Seconds(6));
+        _events.ScheduleEvent(EVENT_CHOP, 3s, 6s);
     }
 
         void Reset() override
@@ -900,7 +900,7 @@ public:
         {
             _finished = false;
             me->SetVisible(true);
-            me->GetMotionMaster()->Clear(true);
+            me->GetMotionMaster()->Clear();
         }
 
         void DoAction(int32 /*action*/) override

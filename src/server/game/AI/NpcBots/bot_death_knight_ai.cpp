@@ -543,7 +543,7 @@ public:
                 return;
             CheckAttackState();
 
-            if (me->getPowerType() != POWER_RUNIC_POWER)
+            if (me->GetPowerType() != POWER_RUNIC_POWER)
                 InitPowers();
 
             if (runicpowertimer <= diff)
@@ -1314,8 +1314,8 @@ public:
                     CastSpellExtraArgs extra;
                     extra.TriggerFlags = TriggerCastFlags::TRIGGERED_FULL_MASK;
                     extra.AddSpellMod(SPELLVALUE_BASE_POINT0, bp0);
-                    extra.AddSpellMod(SPELLVALUE_BASE_POINT1, NULL);
-                    extra.AddSpellMod(SPELLVALUE_BASE_POINT2, NULL);
+                    extra.AddSpellMod(SPELLVALUE_BASE_POINT1, 0);
+                    extra.AddSpellMod(SPELLVALUE_BASE_POINT2, 0);
                     me->CastSpell(me, BLOOD_PRESENCE_HEAL_EFFECT, extra);
                 }
             }
@@ -1347,7 +1347,7 @@ public:
 
             runicpowerIncomeMult = sWorld->getRate(RATE_POWER_RUNICPOWER_INCOME);
             runicpowerLossMult = sWorld->getRate(RATE_POWER_RUNICPOWER_LOSS);
-            me->setPowerType(POWER_RUNIC_POWER);
+            me->SetPowerType(POWER_RUNIC_POWER);
             me->SetMaxPower(POWER_RUNIC_POWER, me->GetCreatePowers(POWER_RUNIC_POWER));            
 
             DefaultInit();

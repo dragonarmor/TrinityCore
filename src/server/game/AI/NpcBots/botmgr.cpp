@@ -174,7 +174,7 @@ void BotMgr::Update(uint32 diff)
             ai->UpdateReviveTimer(diff);
 
         bot->SetCanUpdate(true);
-        bot->IsAIEnabled = true;
+        //bot->IsAIEnabled = true;
 
         if (ai->GetReviveTimer() <= diff)
         {
@@ -205,7 +205,7 @@ void BotMgr::Update(uint32 diff)
         if (Creature* pet = bot->GetBotsPet())
         {
             pet->SetCanUpdate(true);
-            pet->IsAIEnabled = true;
+            //pet->IsAIEnabled = true;
             pet->Update(diff);
             pet->SetCanUpdate(false);
         }
@@ -259,7 +259,7 @@ void BotMgr::_reviveBot(Creature* bot)
     bot->SetBotShouldUpdateStats();
 
     bot->SetHealth(bot->GetMaxHealth() / 6); //~15% of max health
-    if (bot->getPowerType() == POWER_MANA)
+    if (bot->GetPowerType() == POWER_MANA)
         bot->SetPower(POWER_MANA, bot->GetMaxPower(POWER_MANA) / 5); //20% of max mana
 
     if (!bot->GetBotAI()->IAmFree())
@@ -324,7 +324,7 @@ void BotMgr::_teleportBot(Creature* bot, Map* newMap, float x, float y, float z,
         bot->CastSpell(bot, COSMETIC_TELEPORT_EFFECT, true);
     }
 
-    bot->IsAIEnabled = false;
+    //bot->IsAIEnabled = false;
     //UnitAI* oldAI = bot->GetAI();
     //bot->SetAI(NULL);
 
@@ -355,7 +355,7 @@ void BotMgr::_teleportBot(Creature* bot, Map* newMap, float x, float y, float z,
     bot->CombatStop();
     bot->ClearComboPointHolders();
     //bot->DeleteThreatList();
-    bot->GetThreatManager().UpdateOnlineStates();
+    bot->GetThreatManager().EvaluateSuppressed();
     //bot->GetMotionMaster()->Clear(false);                    // remove different non-standard movement generators.
     //end Unit::CleanupBeforeRemoveFromMap()
 
@@ -384,7 +384,7 @@ void BotMgr::_teleportBot(Creature* bot, Map* newMap, float x, float y, float z,
         //end Creature::FarTeleportTo()
 
         //bot->SetAI(oldAI);
-        bot->IsAIEnabled = true;
+        //bot->IsAIEnabled = true;
         return;
     }
 
@@ -435,8 +435,8 @@ void BotMgr::CleanupsBeforeBotDelete(uint64 guid)
     ASSERT(bot->GetOwnerGUID() == _owner->GetGUID());
     bot->SetOwnerGUID(ObjectGuid::Empty);
     _owner->m_Controlled.erase(bot);
-    bot->m_ControlledByPlayer = false;
-    bot->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
+    bot->SetControlledByPlayer(false);
+    bot->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
     bot->SetByteValue(UNIT_FIELD_BYTES_2, 1, 0);
     bot->SetUInt64Value(UNIT_FIELD_CREATEDBY, 0);
 
@@ -612,8 +612,8 @@ BotAddResult BotMgr::AddBot(Creature* bot, bool takeMoney)
     ASSERT(!bot->GetOwnerGUID());
     bot->SetOwnerGUID(_owner->GetGUID());
     _owner->m_Controlled.insert(bot);
-    bot->m_ControlledByPlayer = true;
-    bot->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
+    bot->SetControlledByPlayer(true);
+    bot->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
     bot->SetByteValue(UNIT_FIELD_BYTES_2, 1, _owner->GetByteValue(UNIT_FIELD_BYTES_2, 1));
 
     //bot->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC);

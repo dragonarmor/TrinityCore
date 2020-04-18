@@ -317,7 +317,7 @@ public:
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                         {
                             //Face our target
-                            DarkGlareAngle = me->GetAngle(target);
+                            DarkGlareAngle = me->GetAbsoluteAngle(target);
                             DarkGlareTickTimer = 1000;
                             DarkGlareTick = 0;
                             ClockWise = RAND(true, false);
@@ -1291,7 +1291,7 @@ public:
         {
             if (TempSummon* summon = me->ToTempSummon())
                 if (Unit* summoner = summon->GetSummoner())
-                    if (summoner->IsAIEnabled)
+                    if (summoner->IsAIEnabled())
                         summoner->GetAI()->DoAction(ACTION_FLESH_TENTACLE_KILLED);
         }
     };

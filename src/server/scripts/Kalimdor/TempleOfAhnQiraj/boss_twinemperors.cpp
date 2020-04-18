@@ -114,7 +114,7 @@ struct boss_twinemperorsAI : public ScriptedAI
 
     Creature* GetOtherBoss()
     {
-        return ObjectAccessor::GetCreature(*me, instance->GetGuidData(IAmVeklor() ? DATA_VEKNILASH : DATA_VEKLOR));
+        return instance->GetCreature(IAmVeklor() ? DATA_VEKNILASH : DATA_VEKLOR);
     }
 
     void DamageTaken(Unit* /*done_by*/, uint32 &damage) override
@@ -549,7 +549,7 @@ public:
             if (ShadowBolt_Timer <= diff)
             {
                 if (!me->IsWithinDist(me->GetVictim(), 45.0f))
-                    me->GetMotionMaster()->MoveChase(me->GetVictim(), VEKLOR_DIST, 0);
+                    me->GetMotionMaster()->MoveChase(me->GetVictim(), VEKLOR_DIST);
                 else
                     DoCastVictim(SPELL_SHADOWBOLT);
                 ShadowBolt_Timer = 2000;
@@ -599,7 +599,7 @@ public:
                 // VL doesn't melee
                 if (me->Attack(who, false))
                 {
-                    me->GetMotionMaster()->MoveChase(who, VEKLOR_DIST, 0);
+                    me->GetMotionMaster()->MoveChase(who, VEKLOR_DIST);
                     AddThreat(who, 0.0f);
                 }
             }
